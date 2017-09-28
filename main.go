@@ -22,8 +22,8 @@ var (
 		"Morning :)",
 		"Good morning all",
 		"Gooood morningggggg!!!",
-		"Morning 😄",
-		"Morning everyone ☕️",
+		"Morning :smile:",
+		"Morning everyone :coffee:",
 	}
 )
 
@@ -51,6 +51,8 @@ func main() {
 	hourDelta := (33 - now.Hour()) % 24
 
 	delta := time.Duration(hourDelta)*time.Hour - time.Duration(currentMin)*time.Minute
+
+	//send(cli.token, cli.channel, cli.text)
 
 	fmt.Printf("Schedule to next greeting in %s\n", delta.String())
 
