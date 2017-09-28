@@ -44,11 +44,9 @@ func main() {
 	flag.Parse()
 
 	now := time.Now()
-
-	currentMin := now.Minute()
-	hourDelta := (33 - now.Hour()) % 24
-
-	delta := time.Duration(hourDelta)*time.Hour - time.Duration(currentMin)*time.Minute
+	h, m, s := now.Clock()
+	timestampAtDay := time.Duration(h)*time.Hour + time.Duration(m)*time.Minute + time.Duration(s)*time.Second
+	delta := ((33 * time.Hour) - timestampAtDay) % (24 * time.Hour)
 
 	//send(cli.token, cli.channel, formatText(cli.text, cli.via))
 
