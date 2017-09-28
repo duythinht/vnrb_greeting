@@ -31,6 +31,7 @@ type opt struct {
 	token   string
 	channel string
 	text    string
+	via     string
 }
 
 func main() {
@@ -38,7 +39,8 @@ func main() {
 	cli := new(opt)
 	flag.StringVar(&cli.channel, "channel", "C0GCPHQNM", "Channel to say greeting")
 	flag.StringVar(&cli.token, "token", "Unknown", "slack user token to say greeting")
-	flag.StringVar(&cli.text, "text", pickRandomGreeting(), "Message to say")
+	flag.StringVar(&cli.text, "text", "", "Message to say, if empty, pick random message each greeting")
+	flag.StringVar(&cli.via, "via", "", "Name of bot")
 	flag.Parse()
 
 	now := time.Now()
@@ -48,22 +50,24 @@ func main() {
 
 	delta := time.Duration(hourDelta)*time.Hour - time.Duration(currentMin)*time.Minute
 
-	//send(cli.token, cli.channel, cli.text)
+	//send(cli.token, cli.channel, formatText(cli.text, cli.via))
 
-	fmt.Printf("Schedule to next greeting in %s to channel: %s, text: '%s'\n", delta.String(), cli.channel, cli.text)
+	fmt.Printf("Schedule to next greeting in %s\n", delta.String())
 
 	timer := time.NewTimer(delta)
 
 	for {
 		t := <-timer.C
-		fmt.Printf("Send message '%s' at %s\n", cli.text, t.String())
-		send(cli.token, cli.channel, cli.text)
+		formatedText := formatText(cli.text, cli.via)
+		fmt.Printf("Send a message at %s\n", t.String())
+		send(cli.token, cli.channel, formatedText)
 		timer.Reset(24 * time.Hour)
 	}
 }
 
 func send(token string, channel string, text string) {
-	requestURL := fmt.Sprintf("%s?token=%s&channel=%s&text=%s", VNRB_SLACK_URL, token, channel, url.QueryEscape(text))
+	requestURL := fmt.Sprintf("%s?token=%s&channel=%s&text=%s", VNRB_SLACK_URL, token, channel, text)
+	fmt.Println("Request to:", requestURL)
 	resp, err := http.Get(requestURL)
 	fatalIfErr(err)
 	defer func() {
@@ -80,6 +84,17 @@ func fatalIfErr(err error) {
 	}
 }
 
-func pickRandomGreeting() string {
-	return greetings[rand.Intn(len(greetings))]
+//format message
+func formatText(text string, via string) string {
+	var message string
+	if len(text) == 0 {
+		message = greetings[rand.Intn(len(greetings))]
+	} else {
+		message = text
+	}
+
+	if len(via) == 0 {
+		return url.QueryEscape(fmt.Sprintf("%s", message))
+	}
+	return url.QueryEscape(fmt.Sprintf("%s\n_- by %s -_", message, via))
 }
