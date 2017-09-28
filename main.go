@@ -50,13 +50,13 @@ func main() {
 
 	//send(cli.token, cli.channel, cli.text)
 
-	fmt.Printf("Schedule to next greeting in %s\n", delta.String())
+	fmt.Printf("Schedule to next greeting in %s to channel: %s, text: '%s'\n", delta.String(), cli.channel, cli.text)
 
 	timer := time.NewTimer(delta)
 
 	for {
 		t := <-timer.C
-		fmt.Printf("Send message '%s' at %s", cli.text, t.String())
+		fmt.Printf("Send message '%s' at %s\n", cli.text, t.String())
 		send(cli.token, cli.channel, cli.text)
 		timer.Reset(24 * time.Hour)
 	}
@@ -82,5 +82,4 @@ func fatalIfErr(err error) {
 
 func pickRandomGreeting() string {
 	return greetings[rand.Intn(len(greetings))]
-
 }
