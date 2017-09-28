@@ -34,16 +34,12 @@ type opt struct {
 }
 
 func main() {
+	rand.Seed(time.Now().Unix())
 	cli := new(opt)
 	flag.StringVar(&cli.channel, "channel", "C0GCPHQNM", "Channel to say greeting")
 	flag.StringVar(&cli.token, "token", "Unknown", "slack user token to say greeting")
-	flag.StringVar(&cli.text, "text", "", "Message to say")
+	flag.StringVar(&cli.text, "text", pickRandomGreeting(), "Message to say")
 	flag.Parse()
-
-	if cli.text == "" {
-		rand.Seed(time.Now().Unix())
-		cli.text = pickRandomGreeting()
-	}
 
 	now := time.Now()
 
