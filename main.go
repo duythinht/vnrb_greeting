@@ -17,11 +17,11 @@ const (
 
 var (
 	greetings = []string{
-		"Good morning",
+		"Good morning!!!",
 		"Morning",
-		"morning :)",
-		"good morning all",
-		"Gooood morningggggg",
+		"Morning :)",
+		"Good morning all",
+		"Gooood morningggggg!!!",
 		"Morning 😄",
 		"Morning everyone ☕️",
 	}
