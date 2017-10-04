@@ -8,6 +8,9 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -31,7 +34,8 @@ type opt struct {
 	token   string
 	channel string
 	text    string
-	via     string
+	by      string
+	at      string
 }
 
 func main() {
@@ -40,7 +44,8 @@ func main() {
 	flag.StringVar(&cli.channel, "channel", "C0GCPHQNM", "Channel to say greeting")
 	flag.StringVar(&cli.token, "token", "Unknown", "slack user token to say greeting")
 	flag.StringVar(&cli.text, "text", "", "Message to say, if empty, pick random message each greeting")
-	flag.StringVar(&cli.via, "via", "", "Name of bot")
+	flag.StringVar(&cli.by, "by", "", "Name of bot")
+	flag.StringVar(&cli.at, "at", "09:00", "related time around to send greeting, format: hh:mm")
 	flag.Parse()
 
 	now := time.Now()
@@ -50,17 +55,44 @@ func main() {
 
 	//send(cli.token, cli.channel, formatText(cli.text, cli.via))
 
-	fmt.Printf("Schedule to next greeting in %s\n", delta.String())
+	delta, err := randomTimeDelta(cli.at)
 
+	fatalIfErr(err)
+	fmt.Printf("Schedule to next greeting in %s, at %s\n", delta.String(), time.Now().Add(delta).String())
 	timer := time.NewTimer(delta)
 
 	for {
 		t := <-timer.C
-		formatedText := formatText(cli.text, cli.via)
 		fmt.Printf("Send a message at %s\n", t.String())
-		send(cli.token, cli.channel, formatedText)
-		timer.Reset(24 * time.Hour)
+		for _, ch := range strings.Split(cli.channel, ",") {
+			formatedText := formatText(cli.text, cli.by)
+			send(cli.token, ch, formatedText)
+		}
+		delta, _ := randomTimeDelta(cli.at)
+		fmt.Printf("Schedule to next greeting in %s, at %s\n", delta.String(), time.Now().Add(delta).String())
+		timer.Reset(delta)
 	}
+}
+
+func randomTimeDelta(at string) (time.Duration, error) {
+	if ok, _ := regexp.MatchString("\\d{2}:\\d{2}", at); ok {
+		atTimeArr := strings.Split(at, ":")
+		atHour, _ := strconv.Atoi(atTimeArr[0])
+		if atHour > 23 {
+			return 0, errors.New("Invalid time, hour shoud < 24")
+		}
+		atMinute, _ := strconv.Atoi(atTimeArr[1])
+		if atMinute > 59 {
+			return 0, errors.New("Invalid time, min should < 60")
+		}
+
+		h, m, s := time.Now().Clock()
+		tsnow := time.Duration(h)*time.Hour + time.Duration(m)*time.Minute + time.Duration(s)*time.Second
+		delta := (time.Duration(24+atHour)*time.Hour + time.Duration(atMinute)*time.Minute - tsnow) % (24 * time.Hour)
+		extra := time.Duration(rand.Intn(900)) * time.Second
+		return delta + extra, nil
+	}
+	return 0, errors.New("Invalid time input, should be format at hh:mm")
 }
 
 func send(token string, channel string, text string) {
