@@ -27,6 +27,7 @@ var (
 		"Gooood morningggggg!!!",
 		"Morning :smile:",
 		"Morning everyone :coffee:",
+		"Ohayo!!!",
 	}
 )
 
