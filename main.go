@@ -56,7 +56,7 @@ func main() {
 
 	//send(cli.token, cli.channel, formatText(cli.text, cli.via))
 
-	delta, err := randomTimeDelta(cli.at)
+	delta, err := calculateTimeDelta(cli.at)
 
 	fatalIfErr(err)
 	fmt.Printf("Schedule to next greeting in %s, at %s\n", delta.String(), time.Now().Add(delta).String())
@@ -66,16 +66,23 @@ func main() {
 		t := <-timer.C
 		fmt.Printf("Send a message at %s\n", t.String())
 		for _, ch := range strings.Split(cli.channel, ",") {
-			formatedText := formatText(cli.text, cli.by)
-			send(cli.token, ch, formatedText)
+			go func() {
+				randomSleepWithin(15 * time.Minute)
+				formatedText := formatText(cli.text, cli.by)
+				send(cli.token, ch, formatedText)
+			}()
 		}
-		delta, _ := randomTimeDelta(cli.at)
+		delta, _ := calculateTimeDelta(cli.at)
 		fmt.Printf("Schedule to next greeting in %s, at %s\n", delta.String(), time.Now().Add(delta).String())
 		timer.Reset(delta)
 	}
 }
 
-func randomTimeDelta(at string) (time.Duration, error) {
+func randomSleepWithin(around time.Duration) {
+	time.Sleep(time.Duration(rand.Int63n(int64(around))))
+}
+
+func calculateTimeDelta(at string) (time.Duration, error) {
 	if ok, _ := regexp.MatchString("\\d{2}:\\d{2}", at); ok {
 		atTimeArr := strings.Split(at, ":")
 		atHour, _ := strconv.Atoi(atTimeArr[0])
@@ -90,8 +97,7 @@ func randomTimeDelta(at string) (time.Duration, error) {
 		h, m, s := time.Now().Clock()
 		tsnow := time.Duration(h)*time.Hour + time.Duration(m)*time.Minute + time.Duration(s)*time.Second
 		delta := (time.Duration(24+atHour)*time.Hour + time.Duration(atMinute)*time.Minute - tsnow) % (24 * time.Hour)
-		extra := time.Duration(rand.Intn(900)) * time.Second
-		return delta + extra, nil
+		return delta, nil
 	}
 	return 0, errors.New("Invalid time input, should be format at hh:mm")
 }
