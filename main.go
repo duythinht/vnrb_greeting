@@ -49,11 +49,6 @@ func main() {
 	flag.StringVar(&cli.at, "at", "09:00", "related time around to send greeting, format: hh:mm")
 	flag.Parse()
 
-	now := time.Now()
-	h, m, s := now.Clock()
-	timestampAtDay := time.Duration(h)*time.Hour + time.Duration(m)*time.Minute + time.Duration(s)*time.Second
-	delta := ((33 * time.Hour) - timestampAtDay) % (24 * time.Hour)
-
 	//send(cli.token, cli.channel, formatText(cli.text, cli.via))
 
 	delta, err := calculateTimeDelta(cli.at)
@@ -72,9 +67,9 @@ func main() {
 				send(cli.token, ch, formatedText)
 			}()
 		}
-		delta, _ := calculateTimeDelta(cli.at)
+		//delta, _ := calculateTimeDelta(cli.at)
 		fmt.Printf("Schedule to next greeting in %s, at %s\n", delta.String(), time.Now().Add(delta).String())
-		timer.Reset(delta)
+		timer.Reset(24 * time.Hour)
 	}
 }
 
